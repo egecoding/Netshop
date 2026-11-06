@@ -46,6 +46,14 @@ const specSlotFields = Object.fromEntries(
   Array.from({ length: SPEC_SLOT_COUNT }, (_, i) => [`spec${i + 1}`, specSlotSchema])
 ) as Record<`spec${number}`, typeof specSlotSchema>;
 
+const IMAGE_URL_SLOT_COUNT = 5;
+const imageUrlFields = Object.fromEntries(
+  Array.from({ length: IMAGE_URL_SLOT_COUNT }, (_, i) => [
+    `imageUrl${i + 1}`,
+    z.string().trim().max(500).optional().nullable(),
+  ])
+) as Record<`imageUrl${number}`, z.ZodOptional<z.ZodNullable<z.ZodString>>>;
+
 export const productInputSchema = z.object({
   sku: z.string().trim().min(1).max(40),
   name: z.string().trim().min(1).max(160),
@@ -58,20 +66,26 @@ export const productInputSchema = z.object({
   brand: z.string().trim().min(1).max(80),
   shortDescription: z.string().trim().min(1).max(240),
   description: z.string().trim().min(1).max(4000),
-  // Admins type a human shilling amount (e.g. "24900.50"), not the raw stored subunit --
-  // converted to priceCents/compareAtCents via shillingsToCents() in the action handler.
   priceShillings: z.coerce.number().min(0),
   compareAtShillings: z.coerce.number().min(0).optional().nullable(),
   stockQuantity: z.coerce.number().int().min(0),
   categoryId: z.string().min(1),
   isFeatured: z.coerce.boolean().optional().default(false),
   isActive: z.coerce.boolean().optional().default(true),
-  // An empty <input type="file"> still submits a zero-byte File in the FormData (not an absent
-  // field), so "was an image actually chosen" has to be checked via `.size > 0` in the handler,
-  // not via this schema -- any File instance, empty or not, passes `.instanceof(File)`.
-  image: z.instanceof(File).optional(),
+  ...imageUrlFields,
   ...specSlotFields,
 });
+
+export function imageUrlSlotsToArray(input: Record<string, unknown>): string[] {
+  const urls: string[] = [];
+  for (let i = 1; i <= IMAGE_URL_SLOT_COUNT; i++) {
+    const val = input[`imageUrl${i}`];
+    if (typeof val === 'string' && val.trim().length > 0) {
+      urls.push(val.trim());
+    }
+  }
+  return urls;
+}
 
 export function specSlotsToRecord(input: Record<string, unknown>): Record<string, string> {
   const record: Record<string, string> = {};

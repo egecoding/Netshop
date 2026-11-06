@@ -1,0 +1,25 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Header from '../components/ui/Header.astro';
+import Footer from '../components/ui/Footer.astro';
+import CartDrawer from '../components/islands/CartDrawer';
+import ToastHost from '../components/islands/ToastHost';
+import { getCartSummaryForDisplay } from '../lib/cart';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const summary = await getCartSummaryForDisplay(Astro.cookies, Astro.locals.user);
+---
+
+<BaseLayout title={Astro.props.title} description={Astro.props.description}>
+  <Header cartCount={summary.itemCount} />
+  <main>
+    <slot />
+  </main>
+  <Footer />
+  <CartDrawer client:load />
+  <ToastHost client:load />
+</BaseLayout>

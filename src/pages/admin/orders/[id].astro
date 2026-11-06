@@ -1,0 +1,78 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { actions } from 'astro:actions';
+import { formatCents } from '../../../lib/money';
+import { prisma } from '../../../lib/db';
+
+const { id } = Astro.params;
+
+const statusResult = Astro.getActionResult(actions.admin.orders.updateStatus);
+if (statusResult && !statusResult.error) {
+  return Astro.redirect(`/admin/orders/${id}`);
+}
+
+const order = await prisma.order.findUnique({ where: { id }, include: { items: true, user: true } });
+if (!order) {
+  return Astro.redirect('/admin/orders');
+}
+
+const statuses = ['PENDING_PAYMENT', 'PAID', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'CANCELLED'];
+---
+
+<AdminLayout title={`Order ${order.orderNumber}`}>
+  <a href="/admin/orders" class="text-sm font-semibold text-info hover:underline">&larr; Back to Orders</a>
+  <h1 class="mt-3 text-2xl font-bold text-slate-900">Order {order.orderNumber}</h1>
+  <p class="mt-1 text-sm text-slate-500">
+    Placed {order.placedAt.toLocaleString()} by {order.user ? order.user.email : `${order.email} (guest)`}
+  </p>
+
+  <div class="mt-6 grid gap-6 lg:grid-cols-[1fr_300px]">
+    <div class="card divide-y divide-slate-100 p-6">
+      {
+        order.items.map((item) => (
+          <div class="flex items-center justify-between py-3 text-sm">
+            <div>
+              <p class="font-medium text-slate-900">{item.nameSnapshot}</p>
+              <p class="font-mono text-xs text-slate-400">{item.skuSnapshot} &times; {item.quantity}</p>
+            </div>
+            <p class="font-mono font-semibold text-slate-900">{formatCents(item.lineTotalCents)}</p>
+          </div>
+        ))
+      }
+      <div class="pt-4 text-sm">
+        <div class="flex justify-between"><span class="text-slate-600">Subtotal</span><span class="font-mono">{formatCents(order.subtotalCents)}</span></div>
+        <div class="flex justify-between"><span class="text-slate-600">Shipping</span><span class="font-mono">{formatCents(order.shippingCents)}</span></div>
+        <div class="flex justify-between"><span class="text-slate-600">VAT (16%)</span><span class="font-mono">{formatCents(order.taxCents)}</span></div>
+        <div class="mt-1 flex justify-between border-t border-slate-200 pt-1 text-base font-bold"><span>Total</span><span class="font-mono">{formatCents(order.totalCents)}</span></div>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <div class="card p-5">
+        <h2 class="font-semibold text-slate-900">Status</h2>
+        {
+          statusResult?.error && (
+            <div class="mt-2 rounded-md bg-red-50 p-2 text-xs text-red-700">{statusResult.error.message}</div>
+          )
+        }
+        <form method="POST" action={actions.admin.orders.updateStatus} class="mt-3 space-y-2">
+          <input type="hidden" name="id" value={order.id} />
+          <select name="status" class="input">
+            {statuses.map((s) => <option value={s} selected={s === order.status}>{s}</option>)}
+          </select>
+          <button type="submit" class="btn btn-primary w-full text-sm">Update Status</button>
+        </form>
+      </div>
+
+      <div class="card p-5">
+        <h2 class="font-semibold text-slate-900">Shipping Address</h2>
+        <address class="mt-2 text-sm text-slate-600 not-italic">
+          {order.shippingName}<br />
+          {order.shippingLine1}{order.shippingLine2 ? `, ${order.shippingLine2}` : ''}<br />
+          {order.shippingCity}, {order.shippingState} {order.shippingPostalCode}<br />
+          {order.shippingCountry}
+        </address>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

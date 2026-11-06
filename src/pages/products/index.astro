@@ -1,0 +1,68 @@
+---
+import ShopLayout from '../../layouts/ShopLayout.astro';
+import ProductCard from '../../components/ui/ProductCard.astro';
+import Breadcrumbs from '../../components/ui/Breadcrumbs.astro';
+import Pagination from '../../components/ui/Pagination.astro';
+import EmptyState from '../../components/ui/EmptyState.astro';
+import FilterSidebar from '../../components/islands/FilterSidebar';
+import { parseCatalogFilters, queryCatalog } from '../../lib/catalog';
+
+const filters = parseCatalogFilters(Astro.url);
+const { products, total, totalPages, availableBrands } = await queryCatalog(filters);
+
+function buildHref(page: number) {
+  const params = new URLSearchParams(Astro.url.searchParams);
+  params.set('page', String(page));
+  return `/products?${params.toString()}`;
+}
+
+const title = filters.q ? `Search: "${filters.q}"` : 'All Products';
+---
+
+<ShopLayout title={title}>
+  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    <Breadcrumbs items={[{ label: title }]} />
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold text-slate-900">{title}</h1>
+      <p class="text-sm text-slate-500">{total} product{total === 1 ? '' : 's'}</p>
+    </div>
+
+    <div class="mt-6 grid gap-6 lg:grid-cols-[260px_1fr]">
+      <aside>
+        <FilterSidebar
+          client:load
+          actionPath="/products"
+          availableBrands={availableBrands}
+          selectedBrands={filters.brands}
+          minPrice={filters.minPriceCents ? filters.minPriceCents / 100 : undefined}
+          maxPrice={filters.maxPriceCents ? filters.maxPriceCents / 100 : undefined}
+          inStockOnly={filters.inStockOnly}
+          sort={filters.sort}
+          q={filters.q}
+        />
+      </aside>
+
+      <div>
+        {
+          products.length === 0 ? (
+            <EmptyState
+              title="No products match those filters"
+              description="Try widening your price range or clearing a filter."
+              actionHref="/products"
+              actionLabel="Clear Filters"
+            />
+          ) : (
+            <>
+              <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+                {products.map((product) => (
+                  <ProductCard product={product} />
+                ))}
+              </div>
+              <Pagination page={filters.page} totalPages={totalPages} buildHref={buildHref} />
+            </>
+          )
+        }
+      </div>
+    </div>
+  </div>
+</ShopLayout>

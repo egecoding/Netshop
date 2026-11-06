@@ -1,0 +1,46 @@
+---
+import PriceDisplay from './PriceDisplay.astro';
+import StockBadge from './StockBadge.astro';
+import RatingStars from './RatingStars.astro';
+import AddToCartButton from '../islands/AddToCartButton';
+import { percentOff } from '../../lib/money';
+import type { ParsedProduct } from '../../lib/products';
+
+interface Props {
+  product: ParsedProduct;
+}
+
+const { product } = Astro.props;
+const image = product.images[0] ?? '';
+const discount = product.compareAtCents ? percentOff(product.priceCents, product.compareAtCents) : 0;
+---
+
+<div class="product-card group">
+  <a href={`/products/${product.slug}`} class="relative block aspect-square bg-slate-50">
+    {discount > 0 && <span class="ribbon-discount">-{discount}%</span>}
+    <img
+      src={image}
+      alt={product.name}
+      loading="lazy"
+      class="h-full w-full object-contain p-4 transition duration-300 group-hover:scale-110"
+    />
+  </a>
+  <div class="flex flex-1 flex-col gap-1.5 p-3">
+    <p class="text-[11px] font-bold tracking-wide text-brand uppercase">{product.brand}</p>
+    <a href={`/products/${product.slug}`} class="line-clamp-2 text-sm font-medium text-slate-800 hover:text-brand">
+      {product.name}
+    </a>
+    <RatingStars ratingAvg={product.ratingAvg} ratingCount={product.ratingCount} />
+    <div class="mt-auto flex items-center justify-between gap-2">
+      <PriceDisplay priceCents={product.priceCents} compareAtCents={product.compareAtCents} />
+      <StockBadge stockQuantity={product.stockQuantity} />
+    </div>
+    <AddToCartButton
+      client:visible
+      productId={product.id}
+      productName={product.name}
+      inStock={product.stockQuantity > 0}
+      compact
+    />
+  </div>
+</div>

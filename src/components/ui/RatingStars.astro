@@ -1,0 +1,46 @@
+---
+interface Props {
+  ratingAvg: number;
+  ratingCount: number;
+  size?: 'sm' | 'md';
+}
+
+const { ratingAvg, ratingCount, size = 'sm' } = Astro.props;
+const rounded = Math.round(ratingAvg * 2) / 2; // nearest half star
+const starSize = size === 'md' ? 'h-4 w-4' : 'h-3.5 w-3.5';
+const textSize = size === 'md' ? 'text-sm' : 'text-xs';
+// Unique per render so multiple instances on one page don't collide on SVG clip-path ids.
+const uid = Math.random().toString(36).slice(2, 9);
+---
+
+<div class="inline-flex items-center gap-1">
+  <div class="star-row" aria-hidden="true">
+    {
+      Array.from({ length: 5 }, (_, i) => {
+        const idx = i + 1;
+        const fill = rounded >= idx ? 1 : rounded >= idx - 0.5 ? 0.5 : 0;
+        return (
+          <svg viewBox="0 0 20 20" class={starSize}>
+            <defs>
+              <clipPath id={`half-${uid}-${i}`}>
+                <rect x="0" y="0" width={fill * 20} height="20" />
+              </clipPath>
+            </defs>
+            <path
+              d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.78L10 14.9l-5.2 2.6.99-5.78-4.21-4.1 5.82-.85z"
+              fill="var(--color-slate-200)"
+            />
+            <path
+              d="M10 1.5l2.6 5.27 5.82.85-4.21 4.1.99 5.78L10 14.9l-5.2 2.6.99-5.78-4.21-4.1 5.82-.85z"
+              fill="currentColor"
+              clip-path={`url(#half-${uid}-${i})`}
+            />
+          </svg>
+        );
+      })
+    }
+  </div>
+  <span class={`${textSize} text-slate-500`}>
+    {ratingAvg.toFixed(1)} <span class="text-slate-400">({ratingCount})</span>
+  </span>
+</div>

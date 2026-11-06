@@ -1,0 +1,30 @@
+---
+import { categoryIconBySlug } from '../../lib/categories';
+
+interface CategoryLike {
+  name: string;
+  slug: string;
+}
+
+interface Props {
+  categories: CategoryLike[];
+}
+
+const { categories } = Astro.props;
+---
+
+<div class="grid grid-cols-4 gap-3 sm:grid-cols-6 lg:grid-cols-[repeat(13,minmax(0,1fr))]">
+  {
+    categories.map((category) => (
+      <a
+        href={`/categories/${category.slug}`}
+        class="group flex flex-col items-center gap-2 rounded-xl p-2 text-center transition hover:bg-orange-50"
+      >
+        <span class="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-orange-100 to-red-100 text-2xl shadow-sm transition group-hover:scale-110 group-hover:shadow-md">
+          {categoryIconBySlug(category.slug)}
+        </span>
+        <span class="line-clamp-2 text-xs font-medium text-slate-600 group-hover:text-brand">{category.name}</span>
+      </a>
+    ))
+  }
+</div>

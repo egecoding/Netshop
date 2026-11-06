@@ -1,0 +1,47 @@
+---
+import ShopLayout from '../layouts/ShopLayout.astro';
+import { actions } from 'astro:actions';
+
+if (Astro.locals.user) {
+  return Astro.redirect('/account');
+}
+
+const next = Astro.url.searchParams.get('next') || '/account';
+
+const result = Astro.getActionResult(actions.auth.register);
+if (result && !result.error) {
+  return Astro.redirect(next);
+}
+---
+
+<ShopLayout title="Create Account">
+  <div class="mx-auto max-w-md px-4 py-14 sm:px-6">
+    <h1 class="text-2xl font-bold text-slate-900">Create Your Account</h1>
+
+    {
+      result?.error && (
+        <div class="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{result.error.message}</div>
+      )
+    }
+
+    <form method="POST" action={`${actions.auth.register}&next=${encodeURIComponent(next)}`} class="card mt-6 space-y-4 p-6">
+      <div>
+        <label class="label" for="name">Full Name</label>
+        <input class="input" type="text" id="name" name="name" required />
+      </div>
+      <div>
+        <label class="label" for="email">Email</label>
+        <input class="input" type="email" id="email" name="email" required />
+      </div>
+      <div>
+        <label class="label" for="password">Password</label>
+        <input class="input" type="password" id="password" name="password" minlength="8" required />
+      </div>
+      <button type="submit" class="btn btn-primary w-full">Create Account</button>
+    </form>
+
+    <p class="mt-4 text-center text-sm text-slate-500">
+      Already have an account? <a href="/login" class="font-semibold text-info hover:underline">Sign in</a>
+    </p>
+  </div>
+</ShopLayout>

@@ -1,0 +1,33 @@
+---
+interface Props {
+  page: number;
+  totalPages: number;
+  buildHref: (page: number) => string;
+}
+
+const { page, totalPages, buildHref } = Astro.props;
+---
+
+{
+  totalPages > 1 && (
+    <nav class="mt-8 flex items-center justify-center gap-2" aria-label="Pagination">
+      <a
+        href={buildHref(Math.max(1, page - 1))}
+        aria-disabled={page <= 1}
+        class={`btn btn-secondary ${page <= 1 ? 'pointer-events-none opacity-50' : ''}`}
+      >
+        Previous
+      </a>
+      <span class="px-3 text-sm text-slate-600">
+        Page {page} of {totalPages}
+      </span>
+      <a
+        href={buildHref(Math.min(totalPages, page + 1))}
+        aria-disabled={page >= totalPages}
+        class={`btn btn-secondary ${page >= totalPages ? 'pointer-events-none opacity-50' : ''}`}
+      >
+        Next
+      </a>
+    </nav>
+  )
+}

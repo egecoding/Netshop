@@ -1,0 +1,40 @@
+---
+interface Defaults {
+  id?: string;
+  name?: string;
+  slug?: string;
+  description?: string | null;
+  sortOrder?: number;
+}
+
+interface Props {
+  action: any;
+  defaults?: Defaults;
+  submitLabel: string;
+}
+
+const { action, defaults = {}, submitLabel } = Astro.props;
+---
+
+<form method="POST" action={action} class="card space-y-5 p-6">
+  {defaults.id && <input type="hidden" name="id" value={defaults.id} />}
+
+  <div>
+    <label class="label" for="name">Name</label>
+    <input class="input" type="text" id="name" name="name" required value={defaults.name ?? ''} />
+  </div>
+  <div>
+    <label class="label" for="slug">Slug</label>
+    <input class="input" type="text" id="slug" name="slug" required pattern="[a-z0-9-]+" value={defaults.slug ?? ''} />
+  </div>
+  <div>
+    <label class="label" for="description">Description</label>
+    <textarea class="input" id="description" name="description" rows="3">{defaults.description ?? ''}</textarea>
+  </div>
+  <div>
+    <label class="label" for="sortOrder">Sort Order</label>
+    <input class="input" type="number" id="sortOrder" name="sortOrder" value={defaults.sortOrder ?? 0} />
+  </div>
+
+  <button type="submit" class="btn btn-primary w-full">{submitLabel}</button>
+</form>

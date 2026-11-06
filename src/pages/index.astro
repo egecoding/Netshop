@@ -1,0 +1,122 @@
+---
+import ShopLayout from '../layouts/ShopLayout.astro';
+import ProductCard from '../components/ui/ProductCard.astro';
+import CategoryIconGrid from '../components/ui/CategoryIconGrid.astro';
+import HeroCarousel from '../components/islands/HeroCarousel';
+import FlashSaleCountdown from '../components/islands/FlashSaleCountdown';
+import { prisma } from '../lib/db';
+import { parseProduct } from '../lib/products';
+import { percentOff } from '../lib/money';
+import { categoryIconBySlug } from '../lib/categories';
+
+const categories = await prisma.category.findMany({ orderBy: { sortOrder: 'asc' } });
+
+const [featuredRaw, discountedRaw] = await Promise.all([
+  prisma.product.findMany({
+    where: { isFeatured: true, isActive: true },
+    take: 8,
+    orderBy: { createdAt: 'desc' },
+  }),
+  prisma.product.findMany({
+    where: { isActive: true, compareAtCents: { not: null } },
+    take: 40,
+  }),
+]);
+
+const featured = featuredRaw.map(parseProduct);
+const flashSale = discountedRaw
+  .map(parseProduct)
+  .filter((p) => p.compareAtCents)
+  .sort((a, b) => percentOff(b.priceCents, b.compareAtCents!) - percentOff(a.priceCents, a.compareAtCents!))
+  .slice(0, 8);
+---
+
+<ShopLayout description="Radios, antennas, switches, and infrastructure parts built for wireless ISPs and installers.">
+  <div class="mx-auto max-w-7xl px-4 pt-4 sm:px-6">
+    <HeroCarousel client:load />
+  </div>
+
+  <section class="mx-auto max-w-7xl px-4 py-6 sm:px-6">
+    <CategoryIconGrid categories={categories} />
+  </section>
+
+  <section class="border-y border-orange-100 bg-white">
+    <div class="mx-auto grid max-w-7xl grid-cols-2 gap-6 px-4 py-6 text-center sm:px-6 md:grid-cols-4">
+      <div>
+        <p class="text-sm font-semibold text-slate-900">💵 Cash on Delivery</p>
+        <p class="text-xs text-slate-500">Pay when your order arrives</p>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-slate-900">📦 Bulk Pricing</p>
+        <p class="text-xs text-slate-500">Quote-based volume discounts</p>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-slate-900">🛠️ Field-Tested Gear</p>
+        <p class="text-xs text-slate-500">Chosen for outdoor reliability</p>
+      </div>
+      <div>
+        <p class="text-sm font-semibold text-slate-900">🚚 Fast Fulfillment</p>
+        <p class="text-xs text-slate-500">Ships from regional warehouses</p>
+      </div>
+    </div>
+  </section>
+
+  {
+    flashSale.length > 0 && (
+      <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+        <div class="overflow-hidden rounded-2xl bg-gradient-to-r from-sale to-orange-500 p-5 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <span class="text-2xl">⚡</span>
+              <h2 class="text-xl font-extrabold text-white sm:text-2xl">Flash Sale</h2>
+              <span class="hidden rounded-full bg-white/20 px-3 py-1 text-xs font-bold text-white sm:inline">
+                Ends in
+              </span>
+              <FlashSaleCountdown client:load />
+            </div>
+            <a href="/products?sort=price-asc" class="text-sm font-bold text-white hover:underline">
+              View all deals &rarr;
+            </a>
+          </div>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          {flashSale.map((product) => (
+            <ProductCard product={product} />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+    <div class="mb-6 flex items-center justify-between">
+      <h2 class="text-xl font-bold text-slate-900">✨ Featured Products</h2>
+      <a href="/products" class="text-sm font-semibold text-brand hover:underline">View all &rarr;</a>
+    </div>
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      {featured.map((product) => <ProductCard product={product} />)}
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+    <h2 class="mb-6 text-xl font-bold text-slate-900">Shop by Category</h2>
+    <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      {
+        categories.map((category) => (
+          <a
+            href={`/categories/${category.slug}`}
+            class="card flex items-center gap-3 p-4 transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-50 text-xl">
+              {categoryIconBySlug(category.slug)}
+            </span>
+            <span>
+              <span class="block font-semibold text-slate-900">{category.name}</span>
+              <span class="block text-xs text-slate-500">{category.description}</span>
+            </span>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+</ShopLayout>

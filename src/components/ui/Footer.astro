@@ -1,0 +1,47 @@
+---
+import { SITE_NAME } from '../../lib/constants';
+const year = new Date().getFullYear();
+---
+
+<footer class="mt-16 bg-slate-900 text-slate-300">
+  <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6">
+    <div class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-xs font-bold text-white">
+            NS
+          </span>
+          <span class="text-base font-bold text-white">{SITE_NAME}</span>
+        </div>
+        <p class="mt-3 text-sm leading-6 text-slate-400">
+          Radios, antennas, switches, and infrastructure parts built for wireless ISPs and installers.
+        </p>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-white">Shop</h3>
+        <ul class="mt-3 space-y-2 text-sm text-slate-400">
+          <li><a href="/products" class="hover:text-accent">All Products</a></li>
+          <li><a href="/bulk-quote" class="hover:text-accent">Bulk Quote</a></li>
+          <li><a href="/account/orders" class="hover:text-accent">Order History</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-white">Support</h3>
+        <ul class="mt-3 space-y-2 text-sm text-slate-400">
+          <li><a href="/shipping-returns" class="hover:text-accent">Shipping &amp; Returns</a></li>
+          <li><a href="/faq" class="hover:text-accent">FAQ</a></li>
+          <li><a href="/contact" class="hover:text-accent">Contact Us</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="text-sm font-semibold text-white">Company</h3>
+        <ul class="mt-3 space-y-2 text-sm text-slate-400">
+          <li><a href="/about" class="hover:text-accent">About</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="mt-10 border-t border-slate-800 pt-6 text-xs text-slate-500">
+      &copy; {year} {SITE_NAME}. This is a demo storefront with sample data for evaluation purposes.
+    </div>
+  </div>
+</footer>

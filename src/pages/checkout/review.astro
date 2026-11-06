@@ -1,0 +1,72 @@
+---
+import ShopLayout from '../../layouts/ShopLayout.astro';
+import { formatCents } from '../../lib/money';
+import { getCartSummaryForDisplay } from '../../lib/cart';
+import { getCheckoutDraft, computeTotals } from '../../lib/checkout';
+
+const draft = getCheckoutDraft(Astro.cookies);
+if (!draft) {
+  return Astro.redirect('/checkout');
+}
+
+const summary = await getCartSummaryForDisplay(Astro.cookies, Astro.locals.user);
+if (summary.lines.length === 0) {
+  return Astro.redirect('/cart');
+}
+
+const { shippingCents, taxCents, totalCents } = computeTotals(summary.subtotalCents);
+---
+
+<ShopLayout title="Review Order">
+  <div class="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+    <h1 class="text-2xl font-bold text-slate-900">Review Your Order</h1>
+    <p class="mt-1 text-sm text-slate-500">Step 2 of 3 — Review</p>
+
+    <div class="card mt-6 p-6">
+      <h2 class="font-semibold text-slate-900">Shipping To</h2>
+      <address class="mt-2 text-sm text-slate-600 not-italic">
+        {draft.fullName}<br />
+        {draft.line1}{draft.line2 ? `, ${draft.line2}` : ''}<br />
+        {draft.city}, {draft.state} {draft.postalCode}<br />
+        {draft.country}
+      </address>
+      <a href="/checkout" class="mt-2 inline-block text-xs font-semibold text-info hover:underline">Edit</a>
+    </div>
+
+    <div class="card mt-6 divide-y divide-slate-100 p-6">
+      <h2 class="pb-3 font-semibold text-slate-900">Items</h2>
+      {
+        summary.lines.map((line) => (
+          <div class="flex items-center justify-between py-3 text-sm">
+            <div>
+              <p class="font-medium text-slate-900">{line.product.name}</p>
+              <p class="text-slate-500">Qty {line.quantity}</p>
+            </div>
+            <p class="font-mono font-semibold text-slate-900">{formatCents(line.lineTotalCents)}</p>
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="card mt-6 space-y-2 p-6 text-sm">
+      <div class="flex justify-between">
+        <span class="text-slate-600">Subtotal</span>
+        <span class="font-mono text-slate-900">{formatCents(summary.subtotalCents)}</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-slate-600">Shipping</span>
+        <span class="font-mono text-slate-900">{shippingCents === 0 ? 'Free' : formatCents(shippingCents)}</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-slate-600">VAT (16%)</span>
+        <span class="font-mono text-slate-900">{formatCents(taxCents)}</span>
+      </div>
+      <div class="flex justify-between border-t border-slate-200 pt-2 text-base font-bold">
+        <span>Total</span>
+        <span class="font-mono">{formatCents(totalCents)}</span>
+      </div>
+    </div>
+
+    <a href="/checkout/payment" class="btn btn-primary mt-6 w-full">Continue to Payment</a>
+  </div>
+</ShopLayout>

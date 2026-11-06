@@ -1,0 +1,48 @@
+---
+import ShopLayout from './ShopLayout.astro';
+
+interface Props {
+  title: string;
+}
+
+const path = Astro.url.pathname;
+
+function isActive(href: string) {
+  return path === href || (href !== '/account' && path.startsWith(href));
+}
+
+const links = [
+  { href: '/account', label: 'Dashboard' },
+  { href: '/account/orders', label: 'Order History' },
+  { href: '/account/addresses', label: 'Addresses' },
+];
+---
+
+<ShopLayout title={Astro.props.title}>
+  <div class="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+    <div class="grid gap-8 md:grid-cols-[220px_1fr]">
+      <aside class="space-y-1">
+        {
+          links.map((link) => (
+            <a
+              href={link.href}
+              class={`block rounded-md px-3 py-2 text-sm font-medium ${
+                isActive(link.href) ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
+              }`}
+            >
+              {link.label}
+            </a>
+          ))
+        }
+        <form method="POST" action="/logout" class="pt-2">
+          <button type="submit" class="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-red-600 hover:bg-red-50">
+            Sign Out
+          </button>
+        </form>
+      </aside>
+      <div>
+        <slot />
+      </div>
+    </div>
+  </div>
+</ShopLayout>

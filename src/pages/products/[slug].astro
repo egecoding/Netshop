@@ -1,0 +1,117 @@
+---
+import ShopLayout from '../../layouts/ShopLayout.astro';
+import Breadcrumbs from '../../components/ui/Breadcrumbs.astro';
+import PriceDisplay from '../../components/ui/PriceDisplay.astro';
+import StockBadge from '../../components/ui/StockBadge.astro';
+import RatingStars from '../../components/ui/RatingStars.astro';
+import ProductCard from '../../components/ui/ProductCard.astro';
+import ProductDetailActions from '../../components/islands/ProductDetailActions';
+import { prisma } from '../../lib/db';
+import { parseProduct } from '../../lib/products';
+
+const { slug } = Astro.params;
+const raw = await prisma.product.findUnique({ where: { slug }, include: { category: true } });
+
+if (!raw || !raw.isActive) {
+  return Astro.redirect('/products');
+}
+
+const product = parseProduct(raw);
+
+const relatedRaw = await prisma.product.findMany({
+  where: { categoryId: product.categoryId, isActive: true, id: { not: product.id } },
+  take: 4,
+});
+const related = relatedRaw.map(parseProduct);
+---
+
+<ShopLayout title={product.name} description={product.shortDescription}>
+  <div class="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+    <Breadcrumbs
+      items={[
+        { label: raw.category.name, href: `/categories/${raw.category.slug}` },
+        { label: product.name },
+      ]}
+    />
+
+    <div class="grid gap-10 lg:grid-cols-2">
+      <div>
+        <div class="aspect-square overflow-hidden rounded-xl bg-slate-100">
+          <img src={product.images[0]} alt={product.name} class="h-full w-full object-contain p-6" />
+        </div>
+        {
+          product.images.length > 1 && (
+            <div class="mt-3 grid grid-cols-4 gap-3">
+              {product.images.map((src) => (
+                <div class="aspect-square rounded-lg bg-slate-100">
+                  <img src={src} alt={product.name} class="h-full w-full object-contain p-2" />
+                </div>
+              ))}
+            </div>
+          )
+        }
+      </div>
+
+      <div>
+        <p class="text-sm font-semibold tracking-wide text-brand uppercase">{product.brand}</p>
+        <h1 class="mt-1 text-2xl font-bold text-slate-900">{product.name}</h1>
+        <div class="mt-1 flex items-center gap-3">
+          <RatingStars ratingAvg={product.ratingAvg} ratingCount={product.ratingCount} size="md" />
+          <p class="font-mono text-xs text-slate-400">SKU: {product.sku}</p>
+        </div>
+
+        <div class="mt-4 flex items-center gap-3">
+          <PriceDisplay priceCents={product.priceCents} compareAtCents={product.compareAtCents} size="lg" />
+          <StockBadge stockQuantity={product.stockQuantity} />
+        </div>
+
+        <p class="mt-4 text-slate-600">{product.shortDescription}</p>
+
+        <div class="mt-6">
+          <ProductDetailActions
+            client:load
+            productId={product.id}
+            productName={product.name}
+            stockQuantity={product.stockQuantity}
+          />
+        </div>
+
+        <div class="mt-8 border-t border-slate-200 pt-6">
+          <h2 class="text-sm font-semibold text-slate-900">Description</h2>
+          <p class="mt-2 text-sm leading-6 text-slate-600">{product.description}</p>
+        </div>
+
+        {
+          Object.keys(product.specs).length > 0 && (
+            <div class="mt-8 border-t border-slate-200 pt-6">
+              <h2 class="text-sm font-semibold text-slate-900">Specifications</h2>
+              <table class="mt-3 w-full text-sm">
+                <tbody>
+                  {Object.entries(product.specs).map(([key, value]) => (
+                    <tr class="border-b border-slate-100">
+                      <td class="py-2 pr-4 font-medium text-slate-500">{key}</td>
+                      <td class="py-2 font-mono text-slate-800">{value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+        }
+      </div>
+    </div>
+
+    {
+      related.length > 0 && (
+        <div class="mt-16">
+          <h2 class="mb-6 text-xl font-bold text-slate-900">Related Products</h2>
+          <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {related.map((item) => (
+              <ProductCard product={item} />
+            ))}
+          </div>
+        </div>
+      )
+    }
+  </div>
+</ShopLayout>

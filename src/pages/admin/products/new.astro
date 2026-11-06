@@ -1,0 +1,28 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import ProductForm from '../../../components/admin/ProductForm.astro';
+import { actions } from 'astro:actions';
+import { prisma } from '../../../lib/db';
+
+const result = Astro.getActionResult(actions.admin.products.create);
+if (result && !result.error && result.data) {
+  return Astro.redirect(`/admin/products/${result.data.id}`);
+}
+
+const categories = await prisma.category.findMany({ orderBy: { sortOrder: 'asc' } });
+---
+
+<AdminLayout title="New Product">
+  <a href="/admin/products" class="text-sm font-semibold text-info hover:underline">&larr; Back to Products</a>
+  <h1 class="mt-3 text-2xl font-bold text-slate-900">New Product</h1>
+
+  {
+    result?.error && (
+      <div class="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{result.error.message}</div>
+    )
+  }
+
+  <div class="mt-6">
+    <ProductForm action={actions.admin.products.create} categories={categories} submitLabel="Create Product" />
+  </div>
+</AdminLayout>

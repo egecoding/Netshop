@@ -1,0 +1,38 @@
+---
+import ShopLayout from '../layouts/ShopLayout.astro';
+
+const faqs = [
+  {
+    q: 'Can I pay cash on delivery?',
+    a: 'Yes — select "Cash on Delivery" at checkout and pay the rider when your order arrives.',
+  },
+  {
+    q: 'Can I get volume pricing for a multi-site deployment?',
+    a: 'Submit a request on our Bulk Quote page with your item list and quantities, and our team will follow up with pricing.',
+  },
+  {
+    q: 'Do you have real-time stock levels?',
+    a: 'Each product page shows current stock status. Items showing "Only X left" or "Out of stock" reflect live inventory.',
+  },
+  {
+    q: 'Is this a real store?',
+    a: 'No — this is a demo storefront built to show the shopping experience, with sample data and a simulated checkout.',
+  },
+];
+---
+
+<ShopLayout title="FAQ">
+  <div class="mx-auto max-w-2xl px-4 py-14 sm:px-6">
+    <h1 class="text-3xl font-bold text-slate-900">Frequently Asked Questions</h1>
+    <div class="mt-8 divide-y divide-slate-200">
+      {
+        faqs.map((item) => (
+          <div class="py-5">
+            <h2 class="font-semibold text-slate-900">{item.q}</h2>
+            <p class="mt-2 text-sm text-slate-600">{item.a}</p>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</ShopLayout>

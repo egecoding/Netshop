@@ -1,0 +1,70 @@
+---
+import ShopLayout from '../../layouts/ShopLayout.astro';
+import { actions } from 'astro:actions';
+import { formatCents } from '../../lib/money';
+import { getCartSummaryForDisplay } from '../../lib/cart';
+import { getCheckoutDraft, computeTotals } from '../../lib/checkout';
+
+// Check the action result FIRST: on success, placeOrder's handler already cleared the
+// checkout-draft cookie and emptied the cart as part of this same request, so the "draft
+// missing" / "cart empty" guards below would otherwise misfire and redirect back to /checkout
+// before we ever get to send the user to their confirmation page.
+const result = Astro.getActionResult(actions.checkout.placeOrder);
+if (result && !result.error && result.data) {
+  return Astro.redirect(`/checkout/confirmation/${result.data.orderId}`);
+}
+
+const draft = getCheckoutDraft(Astro.cookies);
+if (!draft) {
+  return Astro.redirect('/checkout');
+}
+
+const summary = await getCartSummaryForDisplay(Astro.cookies, Astro.locals.user);
+if (summary.lines.length === 0) {
+  return Astro.redirect('/cart');
+}
+
+const { totalCents } = computeTotals(summary.subtotalCents);
+---
+
+<ShopLayout title="Payment">
+  <div class="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+    <h1 class="text-2xl font-bold text-slate-900">Payment</h1>
+    <p class="mt-1 text-sm text-slate-500">Step 3 of 3 — Payment</p>
+
+    <div class="mt-4 rounded-md bg-amber-50 p-3 text-sm text-amber-800">
+      <strong>Demo checkout.</strong> Card payments are simulated and never actually charged. Cash
+      on Delivery orders are recorded as pending until paid at the door.
+    </div>
+
+    {
+      result?.error && (
+        <div class="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{result.error.message}</div>
+      )
+    }
+
+    <form method="POST" action={actions.checkout.placeOrder} class="card mt-6 space-y-4 p-6">
+      <label class="flex items-center gap-3 rounded-md border border-slate-200 p-3 text-sm hover:border-brand">
+        <input type="radio" name="paymentMethod" value="cash_on_delivery" checked class="h-4 w-4 accent-orange-600" />
+        <span>
+          <span class="font-semibold text-slate-900">💵 Cash on Delivery</span>
+          <span class="block text-xs text-slate-500">Pay the rider in cash when your order arrives.</span>
+        </span>
+      </label>
+      <label class="flex items-center gap-3 rounded-md border border-slate-200 p-3 text-sm hover:border-brand">
+        <input type="radio" name="paymentMethod" value="mock_card" class="h-4 w-4 accent-orange-600" />
+        <span>
+          <span class="font-semibold text-slate-900">💳 Mock Card</span>
+          <span class="block text-xs text-slate-500">Simulates a successful card payment.</span>
+        </span>
+      </label>
+
+      <div class="flex items-center justify-between border-t border-slate-200 pt-4 text-base font-bold">
+        <span>Total Due</span>
+        <span class="font-mono">{formatCents(totalCents)}</span>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-full">Place Order</button>
+    </form>
+  </div>
+</ShopLayout>

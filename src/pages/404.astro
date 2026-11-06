@@ -1,0 +1,17 @@
+---
+import ShopLayout from '../layouts/ShopLayout.astro';
+---
+
+<ShopLayout title="Page Not Found">
+  <div class="mx-auto max-w-xl px-4 py-24 text-center sm:px-6">
+    <p class="text-sm font-semibold tracking-wide text-slate-400 uppercase">404</p>
+    <h1 class="mt-2 text-3xl font-bold text-slate-900">Page not found</h1>
+    <p class="mt-3 text-slate-500">
+      The page you're looking for doesn't exist or may have been moved.
+    </p>
+    <div class="mt-8 flex justify-center gap-3">
+      <a href="/" class="btn btn-secondary">Go Home</a>
+      <a href="/products" class="btn btn-primary">Shop Products</a>
+    </div>
+  </div>
+</ShopLayout>

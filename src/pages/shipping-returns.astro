@@ -1,0 +1,37 @@
+---
+import ShopLayout from '../layouts/ShopLayout.astro';
+import { formatCents } from '../lib/money';
+import { FLAT_SHIPPING_CENTS, FREE_SHIPPING_THRESHOLD_CENTS } from '../lib/constants';
+---
+
+<ShopLayout title="Shipping & Returns">
+  <div class="mx-auto max-w-3xl px-4 py-14 sm:px-6">
+    <h1 class="text-3xl font-bold text-slate-900">Shipping &amp; Returns</h1>
+
+    <div class="mt-8 space-y-8">
+      <section>
+        <h2 class="text-lg font-semibold text-slate-900">Shipping</h2>
+        <p class="mt-2 text-slate-600">
+          Orders over {formatCents(FREE_SHIPPING_THRESHOLD_CENTS)} ship free. Orders under that have a flat{' '}
+          {formatCents(FLAT_SHIPPING_CENTS)} shipping charge. Most in-stock items ship within 1&ndash;2
+          business days from a regional warehouse, with Cash on Delivery available nationwide.
+        </p>
+      </section>
+      <section>
+        <h2 class="text-lg font-semibold text-slate-900">Returns</h2>
+        <p class="mt-2 text-slate-600">
+          Unopened hardware can be returned within 30 days of delivery for a full refund.
+          Opened radios, antennas, and electronics are eligible for return within 15 days,
+          subject to inspection. Custom cable cuts and spliced fiber are final sale.
+        </p>
+      </section>
+      <section>
+        <h2 class="text-lg font-semibold text-slate-900">Damaged in Transit</h2>
+        <p class="mt-2 text-slate-600">
+          Contact support within 48 hours of delivery with photos of the damaged item and
+          packaging, and we'll process a replacement or refund.
+        </p>
+      </section>
+    </div>
+  </div>
+</ShopLayout>

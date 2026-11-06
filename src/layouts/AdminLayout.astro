@@ -1,0 +1,57 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+  title: string;
+}
+
+const path = Astro.url.pathname;
+function isActive(href: string) {
+  return href === '/admin' ? path === '/admin' : path.startsWith(href);
+}
+
+const links = [
+  { href: '/admin', label: 'Dashboard' },
+  { href: '/admin/products', label: 'Products' },
+  { href: '/admin/categories', label: 'Categories' },
+  { href: '/admin/orders', label: 'Orders' },
+  { href: '/admin/quotes', label: 'Quote Requests' },
+];
+---
+
+<BaseLayout title={`${Astro.props.title} | Admin`}>
+  <div class="flex min-h-screen">
+    <aside class="flex w-56 shrink-0 flex-col bg-brand text-white">
+      <div class="p-4">
+        <a href="/" class="text-sm font-bold tracking-tight">NetShop Admin</a>
+      </div>
+      <nav class="flex-1 space-y-1 p-2">
+        {
+          links.map((link) => (
+            <a
+              href={link.href}
+              class={`block rounded-md px-3 py-2 text-sm font-medium ${
+                isActive(link.href) ? 'bg-slate-700 text-white' : 'text-slate-300 hover:bg-slate-800'
+              }`}
+            >
+              {link.label}
+            </a>
+          ))
+        }
+      </nav>
+      <div class="space-y-1 border-t border-slate-800 p-2">
+        <a href="/" class="block rounded-md px-3 py-2 text-sm font-medium text-slate-300 hover:bg-slate-800">
+          View Store
+        </a>
+        <form method="POST" action="/logout">
+          <button type="submit" class="w-full rounded-md px-3 py-2 text-left text-sm font-medium text-slate-300 hover:bg-slate-800">
+            Sign Out
+          </button>
+        </form>
+      </div>
+    </aside>
+    <main class="flex-1 bg-slate-50 p-8">
+      <slot />
+    </main>
+  </div>
+</BaseLayout>

@@ -1,0 +1,69 @@
+---
+import ShopLayout from '../../../layouts/ShopLayout.astro';
+import { formatCents } from '../../../lib/money';
+import { prisma } from '../../../lib/db';
+
+const { id } = Astro.params;
+const order = await prisma.order.findUnique({ where: { id }, include: { items: true } });
+
+if (!order) {
+  return Astro.redirect('/');
+}
+---
+
+<ShopLayout title="Order Confirmed">
+  <div class="mx-auto max-w-2xl px-4 py-14 sm:px-6">
+    <div class="text-center">
+      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-2xl text-emerald-600">
+        ✓
+      </div>
+      <h1 class="mt-4 text-2xl font-bold text-slate-900">Order Confirmed</h1>
+      <p class="mt-1 text-sm text-slate-500">
+        Thanks, {order.shippingName.split(' ')[0]}! Your order number is
+        <span class="font-mono font-semibold text-slate-900">{order.orderNumber}</span>.
+      </p>
+      <p class="mt-1 text-xs text-slate-400">
+        A confirmation would normally be emailed to {order.email}. This is a demo store, so no email is
+        actually sent.
+      </p>
+    </div>
+
+    <div class="card mt-8 divide-y divide-slate-100 p-6">
+      {
+        order.items.map((item) => (
+          <div class="flex items-center justify-between py-3 text-sm">
+            <div>
+              <p class="font-medium text-slate-900">{item.nameSnapshot}</p>
+              <p class="font-mono text-xs text-slate-400">{item.skuSnapshot} &times; {item.quantity}</p>
+            </div>
+            <p class="font-mono font-semibold text-slate-900">{formatCents(item.lineTotalCents)}</p>
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="card mt-6 space-y-2 p-6 text-sm">
+      <div class="flex justify-between">
+        <span class="text-slate-600">Subtotal</span>
+        <span class="font-mono text-slate-900">{formatCents(order.subtotalCents)}</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-slate-600">Shipping</span>
+        <span class="font-mono text-slate-900">{order.shippingCents === 0 ? 'Free' : formatCents(order.shippingCents)}</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-slate-600">VAT (16%)</span>
+        <span class="font-mono text-slate-900">{formatCents(order.taxCents)}</span>
+      </div>
+      <div class="flex justify-between border-t border-slate-200 pt-2 text-base font-bold">
+        <span>Total</span>
+        <span class="font-mono">{formatCents(order.totalCents)}</span>
+      </div>
+    </div>
+
+    <div class="mt-8 flex justify-center gap-3">
+      <a href="/products" class="btn btn-secondary">Continue Shopping</a>
+      {Astro.locals.user && <a href="/account/orders" class="btn btn-primary">View Order History</a>}
+    </div>
+  </div>
+</ShopLayout>

@@ -1,0 +1,195 @@
+// NetShop database schema.
+// SQLite for local dev; swap the datasource provider + DATABASE_URL to switch to Postgres later.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+
+  sessions  Session[]
+  addresses Address[]
+  orders    Order[]
+  cart      Cart?
+}
+
+model Session {
+  id        String   @id // sha256 hash of the raw cookie token
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Category {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String?
+  iconKey     String?
+  sortOrder   Int     @default(0)
+
+  products Product[]
+}
+
+model Product {
+  id               String   @id @default(cuid())
+  sku              String   @unique
+  name             String
+  slug             String   @unique
+  brand            String
+  shortDescription String
+  description      String
+  // specs: Record<string, string> serialized as JSON
+  specs            String
+  // images: string[] of URLs, serialized as JSON
+  images           String
+  priceCents       Int
+  compareAtCents   Int?
+  stockQuantity    Int      @default(0)
+  ratingAvg        Float    @default(0)
+  ratingCount      Int      @default(0)
+  categoryId       String
+  category         Category @relation(fields: [categoryId], references: [id])
+  isFeatured       Boolean  @default(false)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@index([categoryId])
+}
+
+model Address {
+  id         String  @id @default(cuid())
+  userId     String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName   String
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  postalCode String
+  country    String  @default("US")
+  phone      String?
+  isDefault  Boolean @default(false)
+
+  @@index([userId])
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String?    @unique
+  user      User?      @relation(fields: [userId], references: [id])
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  cartId    String
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+
+  @@unique([cartId, productId])
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  orderNumber String      @unique
+  userId      String?
+  user        User?       @relation(fields: [userId], references: [id])
+  status      OrderStatus @default(PENDING_PAYMENT)
+
+  email              String
+  shippingName       String
+  shippingLine1      String
+  shippingLine2      String?
+  shippingCity       String
+  shippingState      String
+  shippingPostalCode String
+  shippingCountry    String
+
+  subtotalCents Int
+  shippingCents Int
+  taxCents      Int
+  totalCents    Int
+
+  // "mock_card" | "cash_on_delivery" -- no live payment gateway is ever called
+  paymentMethod    String
+  paymentReference String?
+
+  placedAt DateTime    @default(now())
+  items    OrderItem[]
+
+  @@index([userId])
+}
+
+model OrderItem {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  nameSnapshot   String
+  skuSnapshot    String
+  unitPriceCents Int
+  quantity       Int
+  lineTotalCents Int
+
+  @@index([orderId])
+}
+
+model QuoteRequest {
+  id          String   @id @default(cuid())
+  companyName String
+  contactName String
+  email       String
+  phone       String?
+  notes       String?
+  status      String   @default("NEW") // "NEW" | "RESPONDED"
+  createdAt   DateTime @default(now())
+
+  items QuoteRequestItem[]
+}
+
+model QuoteRequestItem {
+  id                  String       @id @default(cuid())
+  quoteRequestId      String
+  quoteRequest        QuoteRequest @relation(fields: [quoteRequestId], references: [id], onDelete: Cascade)
+  productId           String?
+  productNameFreeText String?
+  quantity            Int
+}

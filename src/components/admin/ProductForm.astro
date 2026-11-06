@@ -1,0 +1,179 @@
+---
+import { recordToSpecSlots, SPEC_SLOT_COUNT } from '../../lib/validation';
+import { centsToShillings } from '../../lib/money';
+import type { Category } from '@prisma/client';
+
+interface Defaults {
+  id?: string;
+  sku?: string;
+  name?: string;
+  slug?: string;
+  brand?: string;
+  shortDescription?: string;
+  description?: string;
+  priceCents?: number;
+  compareAtCents?: number | null;
+  stockQuantity?: number;
+  categoryId?: string;
+  isFeatured?: boolean;
+  isActive?: boolean;
+  specs?: Record<string, string>;
+  images?: string[];
+}
+
+interface Props {
+  action: any;
+  categories: Category[];
+  defaults?: Defaults;
+  submitLabel: string;
+}
+
+const { action, categories, defaults = {}, submitLabel } = Astro.props;
+const specSlots = recordToSpecSlots(defaults.specs ?? {});
+---
+
+<form method="POST" action={action} enctype="multipart/form-data" class="card space-y-5 p-6">
+  {defaults.id && <input type="hidden" name="id" value={defaults.id} />}
+
+  <div>
+    <p class="label">Product Image</p>
+    {
+      defaults.images?.[0] && (
+        <img
+          src={defaults.images[0]}
+          alt="Current product image"
+          class="mb-2 h-24 w-24 rounded-md border border-slate-200 bg-slate-50 object-contain p-1"
+        />
+      )
+    }
+    <input class="input" type="file" name="image" accept="image/png,image/jpeg,image/webp" />
+    <p class="mt-1 text-xs text-slate-400">
+      JPEG, PNG, or WebP, up to 5MB. Leave empty to keep the current image
+      {!defaults.images?.[0] && ' (a placeholder graphic will be used until one is uploaded)'}.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <label class="label" for="sku">SKU</label>
+      <input class="input" type="text" id="sku" name="sku" required value={defaults.sku ?? ''} />
+    </div>
+    <div>
+      <label class="label" for="brand">Brand</label>
+      <input class="input" type="text" id="brand" name="brand" required value={defaults.brand ?? ''} />
+    </div>
+  </div>
+
+  <div>
+    <label class="label" for="name">Name</label>
+    <input class="input" type="text" id="name" name="name" required value={defaults.name ?? ''} />
+  </div>
+
+  <div>
+    <label class="label" for="slug">Slug</label>
+    <input class="input" type="text" id="slug" name="slug" required pattern="[a-z0-9-]+" value={defaults.slug ?? ''} />
+  </div>
+
+  <div>
+    <label class="label" for="categoryId">Category</label>
+    <select class="input" id="categoryId" name="categoryId" required>
+      {
+        categories.map((category) => (
+          <option value={category.id} selected={category.id === defaults.categoryId}>
+            {category.name}
+          </option>
+        ))
+      }
+    </select>
+  </div>
+
+  <div>
+    <label class="label" for="shortDescription">Short Description</label>
+    <input
+      class="input"
+      type="text"
+      id="shortDescription"
+      name="shortDescription"
+      required
+      value={defaults.shortDescription ?? ''}
+    />
+  </div>
+
+  <div>
+    <label class="label" for="description">Description</label>
+    <textarea class="input" id="description" name="description" rows="4" required>
+{defaults.description ?? ''}</textarea
+    >
+  </div>
+
+  <div class="grid grid-cols-3 gap-4">
+    <div>
+      <label class="label" for="priceShillings">Price (KES)</label>
+      <input
+        class="input"
+        type="number"
+        id="priceShillings"
+        name="priceShillings"
+        min="0"
+        step="0.01"
+        required
+        value={defaults.priceCents != null ? centsToShillings(defaults.priceCents) : 0}
+      />
+    </div>
+    <div>
+      <label class="label" for="compareAtShillings">Compare-At (KES)</label>
+      <input
+        class="input"
+        type="number"
+        id="compareAtShillings"
+        name="compareAtShillings"
+        min="0"
+        step="0.01"
+        value={defaults.compareAtCents != null ? centsToShillings(defaults.compareAtCents) : ''}
+      />
+    </div>
+    <div>
+      <label class="label" for="stockQuantity">Stock Qty</label>
+      <input class="input" type="number" id="stockQuantity" name="stockQuantity" min="0" required value={defaults.stockQuantity ?? 0} />
+    </div>
+  </div>
+
+  <div class="flex gap-6">
+    <label class="flex items-center gap-2 text-sm text-slate-700">
+      <input type="checkbox" name="isFeatured" value="true" checked={defaults.isFeatured} class="h-4 w-4 rounded border-slate-300" />
+      Featured
+    </label>
+    <label class="flex items-center gap-2 text-sm text-slate-700">
+      <input type="checkbox" name="isActive" value="true" checked={defaults.isActive ?? true} class="h-4 w-4 rounded border-slate-300" />
+      Active (visible in store)
+    </label>
+  </div>
+
+  <div>
+    <p class="label">Specifications</p>
+    <div class="space-y-2">
+      {
+        Array.from({ length: SPEC_SLOT_COUNT }, (_, i) => i + 1).map((n) => (
+          <div class="grid grid-cols-2 gap-2">
+            <input
+              class="input"
+              type="text"
+              name={`spec${n}.key`}
+              placeholder="Key (e.g. Frequency)"
+              value={specSlots[n - 1]?.key ?? ''}
+            />
+            <input
+              class="input"
+              type="text"
+              name={`spec${n}.value`}
+              placeholder="Value (e.g. 5GHz)"
+              value={specSlots[n - 1]?.value ?? ''}
+            />
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-primary w-full">{submitLabel}</button>
+</form>

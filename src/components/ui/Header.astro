@@ -1,0 +1,94 @@
+---
+import { prisma } from '../../lib/db';
+import { SITE_NAME } from '../../lib/constants';
+import CartBadge from '../islands/CartBadge';
+
+interface Props {
+  cartCount: number;
+}
+
+const { cartCount } = Astro.props;
+const user = Astro.locals.user;
+
+const categories = await prisma.category.findMany({
+  orderBy: { sortOrder: 'asc' },
+  select: { name: true, slug: true },
+});
+---
+
+<header class="sticky top-0 z-40 shadow-md">
+  <div class="bg-brand text-white">
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
+      <a href="/" class="flex items-center gap-2 shrink-0">
+        <span class="flex h-9 w-9 items-center justify-center rounded-full bg-white text-sm font-extrabold text-brand shadow">
+          NS
+        </span>
+        <span class="text-xl font-extrabold tracking-tight">{SITE_NAME}</span>
+      </a>
+
+      <form action="/products" method="get" class="order-3 w-full flex-1 sm:order-none sm:w-auto">
+        <div class="relative w-full">
+          <input
+            type="search"
+            name="q"
+            placeholder="Search SKUs, radios, antennas, switches..."
+            class="w-full rounded-full border-0 bg-white px-4 py-2.5 pr-12 text-sm text-slate-800 shadow-inner placeholder:text-slate-400 focus:outline-2 focus:outline-white"
+          />
+          <button
+            type="submit"
+            class="absolute inset-y-0 right-1 my-1 flex items-center rounded-full bg-sale px-3 text-white hover:brightness-110"
+            aria-label="Search"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+              <path
+                fill-rule="evenodd"
+                d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z"
+                clip-rule="evenodd"
+              />
+            </svg>
+          </button>
+        </div>
+      </form>
+
+      <nav class="ml-auto flex items-center gap-4 text-sm font-semibold sm:ml-0">
+        <a href="/bulk-quote" class="hidden hover:text-amber-100 sm:inline">Bulk Quote</a>
+        {
+          user ? (
+            <a href="/account" class="hover:text-amber-100">
+              {user.name.split(' ')[0]}
+            </a>
+          ) : (
+            <a href="/login" class="hover:text-amber-100">
+              Sign In
+            </a>
+          )
+        }
+        {user?.role === 'ADMIN' && <a href="/admin" class="hidden hover:text-amber-100 sm:inline">Admin</a>}
+        <a href="/cart" class="relative flex items-center hover:text-amber-100" aria-label="Cart">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-7 w-7">
+            <path d="M2.25 2.25a.75.75 0 000 1.5h1.386c.17 0 .318.114.362.278l2.459 9.152a2.25 2.25 0 002.172 1.67h7.095a2.25 2.25 0 002.192-1.76l1.21-5.44a.75.75 0 00-.732-.91H5.853l-.557-2.07a1.83 1.83 0 00-1.767-1.42H2.25zM6 18.75a1.5 1.5 0 103 0 1.5 1.5 0 00-3 0zM15 18.75a1.5 1.5 0 103 0 1.5 1.5 0 00-3 0z" />
+          </svg>
+          <CartBadge client:load initialCount={cartCount} />
+        </a>
+      </nav>
+    </div>
+  </div>
+
+  <nav class="bg-slate-900">
+    <div class="mx-auto flex max-w-7xl gap-5 overflow-x-auto px-4 py-2 text-sm sm:px-6">
+      <a href="/products" class="shrink-0 whitespace-nowrap font-semibold text-amber-300 hover:text-white">
+        🔥 All Products
+      </a>
+      {
+        categories.map((category) => (
+          <a
+            href={`/categories/${category.slug}`}
+            class="shrink-0 whitespace-nowrap text-slate-300 hover:text-white"
+          >
+            {category.name}
+          </a>
+        ))
+      }
+    </div>
+  </nav>
+</header>

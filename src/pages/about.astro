@@ -1,0 +1,25 @@
+---
+import ShopLayout from '../layouts/ShopLayout.astro';
+import { SITE_NAME } from '../lib/constants';
+---
+
+<ShopLayout title="About Us">
+  <div class="mx-auto max-w-3xl px-4 py-14 sm:px-6">
+    <h1 class="text-3xl font-bold text-slate-900">About {SITE_NAME}</h1>
+    <div class="mt-6 space-y-4 text-slate-600">
+      <p>
+        {SITE_NAME} supplies the radios, antennas, switches, and infrastructure hardware that
+        wireless Internet service providers (WISPs) rely on to build and maintain their networks —
+        from the tower to the customer's roofline.
+      </p>
+      <p>
+        We work with installers and network operators who need gear that survives outdoor
+        conditions, ships fast, and comes with the specs to plan a link before it goes up a mast.
+      </p>
+      <p>
+        This storefront is a demonstration build with a sample catalog and placeholder product
+        data — it is not a live store.
+      </p>
+    </div>
+  </div>
+</ShopLayout>

@@ -1,0 +1,50 @@
+---
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import CategoryForm from '../../../../components/admin/CategoryForm.astro';
+import { actions } from 'astro:actions';
+import { prisma } from '../../../../lib/db';
+
+const { id } = Astro.params;
+
+const updateResult = Astro.getActionResult(actions.admin.categories.update);
+if (updateResult && !updateResult.error) {
+  return Astro.redirect(`/admin/categories/${id}`);
+}
+
+const deleteResult = Astro.getActionResult(actions.admin.categories.delete);
+if (deleteResult && !deleteResult.error) {
+  return Astro.redirect('/admin/categories');
+}
+
+const category = await prisma.category.findUnique({ where: { id } });
+if (!category) {
+  return Astro.redirect('/admin/categories');
+}
+---
+
+<AdminLayout title={category.name}>
+  <a href="/admin/categories" class="text-sm font-semibold text-info hover:underline">&larr; Back to Categories</a>
+  <div class="mt-3 flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-slate-900">{category.name}</h1>
+    <form
+      method="POST"
+      action={actions.admin.categories.delete}
+      onsubmit="return confirm('Delete this category?')"
+    >
+      <input type="hidden" name="id" value={category.id} />
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+  </div>
+
+  {
+    (updateResult?.error || deleteResult?.error) && (
+      <div class="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
+        {updateResult?.error?.message || deleteResult?.error?.message}
+      </div>
+    )
+  }
+
+  <div class="mt-6">
+    <CategoryForm action={actions.admin.categories.update} submitLabel="Save Changes" defaults={category} />
+  </div>
+</AdminLayout>

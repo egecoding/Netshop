@@ -1,0 +1,83 @@
+---
+import ShopLayout from '../layouts/ShopLayout.astro';
+import { actions } from 'astro:actions';
+import { QUOTE_ITEM_SLOT_COUNT } from '../lib/validation';
+
+const result = Astro.getActionResult(actions.quote.submit);
+const submitted = result && !result.error;
+---
+
+<ShopLayout title="Request a Bulk Quote" description="Request volume pricing for multi-site WISP deployments.">
+  <div class="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+    <h1 class="text-2xl font-bold text-slate-900">Request a Bulk Quote</h1>
+    <p class="mt-1 text-sm text-slate-500">
+      Buying for multiple sites or towers? Tell us what you need and our team will follow up with
+      volume pricing.
+    </p>
+
+    {
+      submitted ? (
+        <div class="card mt-6 p-6 text-center">
+          <p class="text-lg font-semibold text-slate-900">Thanks — your request is in.</p>
+          <p class="mt-1 text-sm text-slate-500">
+            Our team will reach out by email with a quote. (This is a demo store, so no email is
+            actually sent.)
+          </p>
+        </div>
+      ) : (
+        <>
+          {result?.error && (
+            <div class="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{result.error.message}</div>
+          )}
+
+          <form method="POST" action={actions.quote.submit} class="card mt-6 space-y-4 p-6">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="label" for="companyName">Company Name</label>
+                <input class="input" type="text" id="companyName" name="companyName" required />
+              </div>
+              <div>
+                <label class="label" for="contactName">Contact Name</label>
+                <input class="input" type="text" id="contactName" name="contactName" required />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="label" for="email">Email</label>
+                <input class="input" type="email" id="email" name="email" required />
+              </div>
+              <div>
+                <label class="label" for="phone">Phone (optional)</label>
+                <input class="input" type="tel" id="phone" name="phone" />
+              </div>
+            </div>
+
+            <div>
+              <p class="label">Items</p>
+              <div class="space-y-2">
+                {Array.from({ length: QUOTE_ITEM_SLOT_COUNT }, (_, i) => i + 1).map((n) => (
+                  <div class="grid grid-cols-[1fr_90px] gap-2">
+                    <input
+                      class="input"
+                      type="text"
+                      name={`item${n}.productNameFreeText`}
+                      placeholder={`Item ${n} (e.g. "Sentry 90 Sector Antenna")`}
+                    />
+                    <input class="input" type="number" min="0" name={`item${n}.quantity`} placeholder="Qty" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label class="label" for="notes">Notes (optional)</label>
+              <textarea class="input" id="notes" name="notes" rows="3" />
+            </div>
+
+            <button type="submit" class="btn btn-primary w-full">Submit Request</button>
+          </form>
+        </>
+      )
+    }
+  </div>
+</ShopLayout>

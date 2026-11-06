@@ -1,0 +1,78 @@
+---
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import ProductForm from '../../../../components/admin/ProductForm.astro';
+import { actions } from 'astro:actions';
+import { prisma } from '../../../../lib/db';
+import { parseProduct } from '../../../../lib/products';
+
+const { id } = Astro.params;
+
+const updateResult = Astro.getActionResult(actions.admin.products.update);
+if (updateResult && !updateResult.error) {
+  return Astro.redirect(`/admin/products/${id}`);
+}
+
+const deleteResult = Astro.getActionResult(actions.admin.products.delete);
+if (deleteResult && !deleteResult.error) {
+  return Astro.redirect('/admin/products');
+}
+
+const [raw, categories] = await Promise.all([
+  prisma.product.findUnique({ where: { id } }),
+  prisma.category.findMany({ orderBy: { sortOrder: 'asc' } }),
+]);
+
+if (!raw) {
+  return Astro.redirect('/admin/products');
+}
+
+const product = parseProduct(raw);
+---
+
+<AdminLayout title={product.name}>
+  <a href="/admin/products" class="text-sm font-semibold text-info hover:underline">&larr; Back to Products</a>
+  <div class="mt-3 flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-slate-900">{product.name}</h1>
+    <form
+      method="POST"
+      action={actions.admin.products.delete}
+      onsubmit="return confirm('Delete this product? This cannot be undone.')"
+    >
+      <input type="hidden" name="id" value={product.id} />
+      <button type="submit" class="btn btn-danger">Delete</button>
+    </form>
+  </div>
+
+  {
+    (updateResult?.error || deleteResult?.error) && (
+      <div class="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
+        {updateResult?.error?.message || deleteResult?.error?.message}
+      </div>
+    )
+  }
+
+  <div class="mt-6">
+    <ProductForm
+      action={actions.admin.products.update}
+      categories={categories}
+      submitLabel="Save Changes"
+      defaults={{
+        id: product.id,
+        sku: product.sku,
+        name: product.name,
+        slug: product.slug,
+        brand: product.brand,
+        shortDescription: product.shortDescription,
+        description: product.description,
+        priceCents: product.priceCents,
+        compareAtCents: product.compareAtCents,
+        stockQuantity: product.stockQuantity,
+        categoryId: product.categoryId,
+        isFeatured: product.isFeatured,
+        isActive: product.isActive,
+        specs: product.specs,
+        images: product.images,
+      }}
+    />
+  </div>
+</AdminLayout>

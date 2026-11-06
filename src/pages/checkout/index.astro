@@ -1,0 +1,88 @@
+---
+import ShopLayout from '../../layouts/ShopLayout.astro';
+import { actions } from 'astro:actions';
+import { getCartSummaryForDisplay } from '../../lib/cart';
+import { getCheckoutDraft } from '../../lib/checkout';
+
+const summary = await getCartSummaryForDisplay(Astro.cookies, Astro.locals.user);
+if (summary.lines.length === 0) {
+  return Astro.redirect('/cart');
+}
+
+const result = Astro.getActionResult(actions.checkout.setShipping);
+if (result && !result.error) {
+  return Astro.redirect('/checkout/review');
+}
+
+const draft = getCheckoutDraft(Astro.cookies);
+const user = Astro.locals.user;
+const defaults = {
+  email: draft?.email ?? user?.email ?? '',
+  fullName: draft?.fullName ?? user?.name ?? '',
+  line1: draft?.line1 ?? '',
+  line2: draft?.line2 ?? '',
+  city: draft?.city ?? '',
+  state: draft?.state ?? '',
+  postalCode: draft?.postalCode ?? '',
+  country: draft?.country ?? 'KE',
+  phone: draft?.phone ?? '',
+};
+---
+
+<ShopLayout title="Checkout">
+  <div class="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+    <h1 class="text-2xl font-bold text-slate-900">Checkout</h1>
+    <p class="mt-1 text-sm text-slate-500">Step 1 of 3 — Shipping Information</p>
+
+    {
+      result?.error && (
+        <div class="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{result.error.message}</div>
+      )
+    }
+
+    <form method="POST" action={actions.checkout.setShipping} class="card mt-6 space-y-4 p-6">
+      <div>
+        <label class="label" for="email">Email</label>
+        <input class="input" type="email" id="email" name="email" required value={defaults.email} />
+      </div>
+      <div>
+        <label class="label" for="fullName">Full Name</label>
+        <input class="input" type="text" id="fullName" name="fullName" required value={defaults.fullName} />
+      </div>
+      <div>
+        <label class="label" for="line1">Address Line 1</label>
+        <input class="input" type="text" id="line1" name="line1" required value={defaults.line1} />
+      </div>
+      <div>
+        <label class="label" for="line2">Address Line 2 (optional)</label>
+        <input class="input" type="text" id="line2" name="line2" value={defaults.line2} />
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="label" for="city">City</label>
+          <input class="input" type="text" id="city" name="city" required value={defaults.city} />
+        </div>
+        <div>
+          <label class="label" for="state">County</label>
+          <input class="input" type="text" id="state" name="state" required value={defaults.state} />
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="label" for="postalCode">Postal Code</label>
+          <input class="input" type="text" id="postalCode" name="postalCode" required value={defaults.postalCode} />
+        </div>
+        <div>
+          <label class="label" for="country">Country</label>
+          <input class="input" type="text" id="country" name="country" required value={defaults.country} maxlength="2" />
+        </div>
+      </div>
+      <div>
+        <label class="label" for="phone">Phone (optional)</label>
+        <input class="input" type="tel" id="phone" name="phone" value={defaults.phone} />
+      </div>
+
+      <button type="submit" class="btn btn-primary w-full">Continue to Review</button>
+    </form>
+  </div>
+</ShopLayout>

@@ -1,0 +1,68 @@
+---
+import AccountLayout from '../../../layouts/AccountLayout.astro';
+import { formatCents } from '../../../lib/money';
+import { prisma } from '../../../lib/db';
+
+const user = Astro.locals.user!;
+const { id } = Astro.params;
+
+const order = await prisma.order.findUnique({ where: { id }, include: { items: true } });
+
+if (!order || order.userId !== user.id) {
+  return Astro.redirect('/account/orders');
+}
+---
+
+<AccountLayout title={`Order ${order.orderNumber}`}>
+  <a href="/account/orders" class="text-sm font-semibold text-info hover:underline">&larr; Back to Orders</a>
+
+  <div class="mt-3 flex items-center justify-between">
+    <h1 class="text-2xl font-bold text-slate-900">Order {order.orderNumber}</h1>
+    <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">{order.status}</span>
+  </div>
+  <p class="mt-1 text-sm text-slate-500">Placed {order.placedAt.toLocaleString()}</p>
+
+  <div class="card mt-6 divide-y divide-slate-100 p-6">
+    {
+      order.items.map((item) => (
+        <div class="flex items-center justify-between py-3 text-sm">
+          <div>
+            <p class="font-medium text-slate-900">{item.nameSnapshot}</p>
+            <p class="font-mono text-xs text-slate-400">{item.skuSnapshot} &times; {item.quantity}</p>
+          </div>
+          <p class="font-mono font-semibold text-slate-900">{formatCents(item.lineTotalCents)}</p>
+        </div>
+      ))
+    }
+  </div>
+
+  <div class="grid gap-6 sm:grid-cols-2">
+    <div class="card mt-6 p-6">
+      <h2 class="font-semibold text-slate-900">Shipping Address</h2>
+      <address class="mt-2 text-sm text-slate-600 not-italic">
+        {order.shippingName}<br />
+        {order.shippingLine1}{order.shippingLine2 ? `, ${order.shippingLine2}` : ''}<br />
+        {order.shippingCity}, {order.shippingState} {order.shippingPostalCode}<br />
+        {order.shippingCountry}
+      </address>
+    </div>
+    <div class="card mt-6 space-y-2 p-6 text-sm">
+      <div class="flex justify-between">
+        <span class="text-slate-600">Subtotal</span>
+        <span class="font-mono text-slate-900">{formatCents(order.subtotalCents)}</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-slate-600">Shipping</span>
+        <span class="font-mono text-slate-900">{order.shippingCents === 0 ? 'Free' : formatCents(order.shippingCents)}</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-slate-600">VAT (16%)</span>
+        <span class="font-mono text-slate-900">{formatCents(order.taxCents)}</span>
+      </div>
+      <div class="flex justify-between border-t border-slate-200 pt-2 text-base font-bold">
+        <span>Total</span>
+        <span class="font-mono">{formatCents(order.totalCents)}</span>
+      </div>
+    </div>
+  </div>
+</AccountLayout>

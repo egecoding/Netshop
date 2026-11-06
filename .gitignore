@@ -28,6 +28,9 @@ pnpm-debug.log*
 # wrangler local state
 .wrangler/
 
+# netlify local state
+.netlify/
+
 # macOS-specific files
 .DS_Store
 

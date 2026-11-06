@@ -1,13 +1,5 @@
 import type { APIRoute } from 'astro';
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-import { sanitizeFilename, uploadsRoot } from '../../lib/uploads';
-
-const CONTENT_TYPES: Record<string, string> = {
-  jpg: 'image/jpeg',
-  png: 'image/png',
-  webp: 'image/webp',
-};
+import { sanitizeFilename, getR2Bucket } from '../../lib/uploads';
 
 export const GET: APIRoute = async ({ params }) => {
   const filename = sanitizeFilename(params.filename ?? '');
@@ -15,12 +7,14 @@ export const GET: APIRoute = async ({ params }) => {
     return new Response('Not found', { status: 404 });
   }
 
-  const ext = filename.split('.').pop()!;
   try {
-    const data = await readFile(path.join(uploadsRoot(), filename));
-    return new Response(data, {
+    const object = await getR2Bucket().get(`products/${filename}`);
+    if (!object) {
+      return new Response('Not found', { status: 404 });
+    }
+    return new Response(object.body, {
       headers: {
-        'Content-Type': CONTENT_TYPES[ext] ?? 'application/octet-stream',
+        'Content-Type': object.httpMetadata?.contentType ?? 'application/octet-stream',
         'Cache-Control': 'public, max-age=31536000, immutable',
       },
     });

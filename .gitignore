@@ -25,6 +25,9 @@ pnpm-debug.log*
 /uploads/products/*
 !/uploads/products/.gitkeep
 
+# wrangler local state
+.wrangler/
+
 # macOS-specific files
 .DS_Store
 

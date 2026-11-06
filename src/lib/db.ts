@@ -1,14 +1,11 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
+import { PrismaD1 } from '@prisma/adapter-d1';
 
-const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+export let prisma: PrismaClient;
 
-const adapter = new PrismaBetterSqlite3({ url: process.env.DATABASE_URL ?? 'file:./prisma/dev.db' });
-
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({ adapter });
-
-// import.meta.env is only populated when this module is bundled through Vite (i.e. the Astro
-// app itself); guard the access so plain Node scripts like prisma/seed.ts can import this too.
-if (import.meta.env?.DEV) {
-  globalForPrisma.prisma = prisma;
+export function initDb(d1: D1Database) {
+  if (!prisma) {
+    const adapter = new PrismaD1(d1);
+    prisma = new PrismaClient({ adapter });
+  }
 }

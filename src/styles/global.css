@@ -59,6 +59,14 @@
   .font-mono {
     font-feature-settings: "tnum";
   }
+
+  #netlify-badge,
+  [data-netlify-badge],
+  .netlify-badge,
+  a[href*="netlify.com/powered-by"],
+  img[alt*="Deploys by Netlify"] {
+    display: none !important;
+  }
 }
 
 @layer components {
